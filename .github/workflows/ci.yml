@@ -1,0 +1,80 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Install, Lint, Typecheck, Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Use Node.js 20 and cache the appropriate package manager based on detected lockfile
+      - name: Setup Node.js 20 (pnpm)
+        if: hashFiles('pnpm-lock.yaml') != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          check-latest: true
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Setup Node.js 20 (npm)
+        if: hashFiles('package-lock.json') != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          check-latest: true
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Setup Node.js 20 (no cache)
+        if: hashFiles('pnpm-lock.yaml') == '' && hashFiles('package-lock.json') == ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          check-latest: true
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      # Optional: speed up Next.js build by caching its compiler cache
+      - name: Restore Next.js cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            .next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml', '**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-
+
+      # Install dependencies with pnpm if lockfile exists, otherwise npm
+      - name: Install dependencies (pnpm)
+        if: hashFiles('pnpm-lock.yaml') != ''
+        run: pnpm install --frozen-lockfile
+
+      - name: Install dependencies (npm ci)
+        if: hashFiles('pnpm-lock.yaml') == '' && hashFiles('package-lock.json') != ''
+        run: npm ci
+
+      - name: Install dependencies (npm install)
+        if: hashFiles('pnpm-lock.yaml') == '' && hashFiles('package-lock.json') == ''
+        run: npm install
+
+      # Lint with Biome (emits GitHub annotations on failure)
+      - name: Lint (Biome)
+        run: npx @biomejs/biome ci
+
+      # Add problem matcher for TypeScript so errors are annotated in the PR
+      - name: Add TypeScript problem matcher
+        run: echo "::add-matcher::.github/problem-matchers/tsc.json"
+
+      # Type-check the project
+      - name: Type check
+        run: npx tsc --noEmit
+
+      # Build the Next.js app
+      - name: Build
+        run: npm run build
