@@ -1,0 +1,32 @@
+{
+  "problemMatcher": [
+    {
+      "owner": "typescript",
+      "pattern": [
+        {
+          "regexp": "^(?:\\s*(?:\\(\\d+\\))?\\s*)?(.+\\.(?:ts|tsx|js|jsx))\\((\\d+),(\\d+)\\):\\s+(error|warning|info)\\s+TS(\\d+):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "code": 5,
+          "message": 6
+        }
+      ]
+    },
+    {
+      "owner": "typescript2",
+      "pattern": [
+        {
+          "regexp": "^(?:\\s*(?:\\(\\d+\\))?\\s*)?(.+\\.(?:ts|tsx|js|jsx)):(\\d+):(\\d+) -\\s+(error|warning|info)\\s+TS(\\d+):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "code": 5,
+          "message": 6
+        }
+      ]
+    }
+  ]
+}
